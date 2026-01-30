@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { getEntries, getTimeline, getStats } from '../services/api';
 import EntryForm from './EntryForm';
 import EmotionTimeline from './EmotionTimeline';
-import { LogOut, Activity, Flame, Zap, Award } from 'lucide-react';
+import { EmotionBadge, EmotionCard } from './EmotionBadge';
+import { LogOut, Activity, Flame, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function Dashboard({ user, onLogout }) {
@@ -35,8 +36,7 @@ export default function Dashboard({ user, onLogout }) {
 
     const handleNewEntry = (entry) => {
         setEntries(prev => [entry, ...prev]);
-        // Optionally reload stats/timeline here for real-time updates
-        // For now, we accept immediate entry update for responsiveness
+        loadData(); // Reload to get updated stats
     };
 
     return (
@@ -79,17 +79,21 @@ export default function Dashboard({ user, onLogout }) {
 
                         {/* Stats Grid */}
                         {stats && (
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 gap-4">
                                 <div className="glass-panel p-4 rounded-2xl flex flex-col items-center justify-center text-center">
                                     <Flame className="w-6 h-6 text-orange-400 mb-2" />
                                     <div className="text-2xl font-bold text-white">{stats.stats.total_entries}</div>
-                                    <div className="text-xs text-slate-500 font-medium uppercase tracking-wider">Entries</div>
+                                    <div className="text-xs text-slate-500 font-medium uppercase tracking-wider">Total Entries</div>
                                 </div>
-                                <div className="glass-panel p-4 rounded-2xl flex flex-col items-center justify-center text-center">
-                                    <Award className="w-6 h-6 text-purple-400 mb-2" />
-                                    <div className="text-xl font-bold text-white capitalize">{stats.dominant_emotion?.emotion || '-'}</div>
-                                    <div className="text-xs text-slate-500 font-medium uppercase tracking-wider">Dominant</div>
-                                </div>
+
+                                {/* Dominant Emotion Card */}
+                                {stats.dominant_emotion?.emotion && (
+                                    <EmotionCard
+                                        emotion={stats.dominant_emotion.emotion}
+                                        confidence={stats.dominant_emotion.percentage}
+                                        className="glass-panel"
+                                    />
+                                )}
                             </div>
                         )}
                     </div>
@@ -119,16 +123,13 @@ export default function Dashboard({ user, onLogout }) {
                                         initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}
                                         className="group p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-purple-500/30 transition-all cursor-default"
                                     >
-                                        <div className="flex justify-between items-start mb-2">
-                                            <div className="flex items-center gap-3">
-                                                <span className={`w-2 h-2 rounded-full 
-                                            ${entry.emotion?.emotion === 'joy' ? 'bg-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)]' :
-                                                        entry.emotion?.emotion === 'sadness' ? 'bg-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.5)]' :
-                                                            entry.emotion?.emotion === 'anger' ? 'bg-red-400 shadow-[0_0_10px_rgba(248,113,113,0.5)]' :
-                                                                'bg-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.5)]'}`}
-                                                />
-                                                <span className="text-sm font-medium text-slate-200 capitalize">{entry.emotion?.emotion || 'Analyzed'}</span>
-                                            </div>
+                                        <div className="flex justify-between items-start mb-3">
+                                            <EmotionBadge
+                                                emotion={entry.emotion?.emotion || 'neutral'}
+                                                confidence={entry.emotion?.confidence}
+                                                size="sm"
+                                                showConfidence={true}
+                                            />
                                             <span className="text-xs text-slate-500 font-mono">
                                                 {new Date(entry.created_at).toLocaleDateString()}
                                             </span>

@@ -194,9 +194,27 @@ app.get("/api/entries", authenticateToken, async (req, res) => {
             [userId, limit, offset]
         );
 
+        // Transform the data to nest emotion fields
+        const entries = result.rows.map(row => ({
+            id: row.id,
+            content: row.content,
+            timestamp: row.timestamp,
+            created_at: row.created_at,
+            emotion: row.emotion ? {
+                emotion: row.emotion,
+                confidence: row.confidence,
+                joy_score: row.joy_score,
+                sadness_score: row.sadness_score,
+                anger_score: row.anger_score,
+                fear_score: row.fear_score,
+                surprise_score: row.surprise_score,
+                neutral_score: row.neutral_score
+            } : null
+        }));
+
         res.json({
-            entries: result.rows,
-            count: result.rows.length
+            entries,
+            count: entries.length
         });
     } catch (error) {
         console.error("Error fetching entries:", error);
